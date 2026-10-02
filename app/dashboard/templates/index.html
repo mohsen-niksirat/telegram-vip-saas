@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIP Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/dashboard/assets/logo.svg">
+<link rel="stylesheet" href="/dashboard/assets/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+
+<!-- ===== Login screen ===== -->
+<div id="login-screen" class="login-wrap">
+  <form id="login-form" class="glass login-card">
+    <img class="logo-img" src="/dashboard/assets/logo.svg" alt="VIP" width="56" height="56">
+    <h1 id="login-title">پنل مدیریت VIP</h1>
+    <p id="login-sub" class="muted">توکن API مدیر را وارد کنید</p>
+    <input id="token-input" type="password" autocomplete="off" placeholder="X-API-Token" required>
+    <button type="submit" class="btn btn-primary btn-block" id="login-btn">ورود</button>
+    <p id="login-error" class="error hidden"></p>
+    <button type="button" class="btn-link" id="login-lang-toggle">English</button>
+  </form>
+</div>
+
+<!-- ===== App shell ===== -->
+<div id="app" class="hidden">
+  <aside class="sidebar glass">
+    <div class="brand"><img class="logo-img small" src="/dashboard/assets/logo.svg" alt="" width="34" height="34"><span id="brand-name">VIP Admin</span></div>
+    <nav id="nav">
+      <button class="nav-item active" data-view="overview"><span class="ico">▦</span><span data-i18n="nav_overview">نمای کلی</span></button>
+      <button class="nav-item" data-view="channels"><span class="ico">📢</span><span data-i18n="nav_channels">کانال‌ها</span></button>
+      <button class="nav-item" data-view="plans"><span class="ico">💎</span><span data-i18n="nav_plans">پلن‌ها</span></button>
+      <button class="nav-item" data-view="subscriptions"><span class="ico">👥</span><span data-i18n="nav_subs">اشتراک‌ها</span></button>
+      <button class="nav-item" data-view="broadcast"><span class="ico">🚀</span><span data-i18n="nav_broadcast">پیام همگانی</span></button>
+    </nav>
+    <div class="sidebar-foot">
+      <button id="lang-toggle" class="btn-ghost small-btn">EN</button>
+      <button id="logout-btn" class="btn-ghost small-btn danger" data-i18n="logout">خروج</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Overview -->
+    <section id="view-overview" class="view">
+      <div class="view-head overview-head">
+        <h2 data-i18n="nav_overview">نمای کلی</h2>
+        <span id="last-updated" class="muted"></span>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="grid-2">
+        <div class="glass card chart-card"><h3 data-i18n="revenue_30d">درآمد ۳۰ روز اخیر</h3><div class="chart-wrap"><canvas id="revenueChart" height="110"></canvas></div></div>
+        <div class="glass card chart-card"><h3 data-i18n="by_provider">پرداخت‌ها بر اساس درگاه</h3><div class="chart-wrap donut"><canvas id="providerChart" height="110"></canvas></div></div>
+      </div>
+      <div class="glass card">
+        <h3 data-i18n="recent_payments">پرداخت‌های اخیر</h3>
+        <div class="table-scroll"><table id="recent-payments-table"></table></div>
+      </div>
+    </section>
+
+    <!-- Channels -->
+    <section id="view-channels" class="view hidden">
+      <div class="view-head">
+        <h2 data-i18n="nav_channels">کانال‌ها</h2>
+        <button class="btn btn-primary" id="add-channel-btn" data-i18n="add_channel">+ افزودن کانال</button>
+      </div>
+      <div class="glass card"><div class="table-scroll"><table id="channels-table"></table></div></div>
+    </section>
+
+    <!-- Plans -->
+    <section id="view-plans" class="view hidden">
+      <div class="view-head">
+        <h2 data-i18n="nav_plans">پلن‌ها</h2>
+        <button class="btn btn-primary" id="add-plan-btn" data-i18n="add_plan">+ افزودن پلن</button>
+      </div>
+      <div id="plans-groups"></div>
+    </section>
+
+    <!-- Subscriptions -->
+    <section id="view-subs" class="view hidden">
+      <div class="view-head">
+        <h2 data-i18n="nav_subs">اشتراک‌ها</h2>
+        <div style="display:flex; gap:10px;">
+          <button class="btn" id="subs-refresh" title="Refresh">⟳</button>
+          <a class="btn" id="csv-export" href="/api/v1/admin/export/subscriptions.csv" target="_blank" data-i18n="export_csv">⬇ خروجی CSV</a>
+        </div>
+      </div>
+      <div class="glass card">
+        <div class="filters">
+          <div class="chips" id="status-chips">
+            <button class="chip active" data-status="">همه</button>
+            <button class="chip" data-status="active">active</button>
+            <button class="chip" data-status="expired">expired</button>
+            <button class="chip" data-status="pending">pending</button>
+            <button class="chip" data-status="cancelled">cancelled</button>
+          </div>
+          <select id="channel-filter"></select>
+        </div>
+        <div class="table-scroll"><table id="subs-table"></table></div>
+        <div class="pager">
+          <button class="btn" id="subs-prev">‹</button>
+          <span id="subs-page-info" class="muted"></span>
+          <button class="btn" id="subs-next">›</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Broadcast -->
+    <section id="view-broadcast" class="view hidden">
+      <div class="view-head"><h2 data-i18n="nav_broadcast">پیام همگانی</h2></div>
+      <div class="glass card">
+        <label data-i18n="broadcast_text">متن پیام</label>
+        <textarea id="broadcast-text" rows="6" placeholder="..."></textarea>
+        <label data-i18n="broadcast_channel">کانال (اختیاری)</label>
+        <select id="broadcast-channel"></select>
+        <button class="btn btn-primary" id="broadcast-send" data-i18n="send">ارسال</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== Modals ===== -->
+<div id="modal-backdrop" class="hidden">
+  <div class="glass modal" id="modal"></div>
+</div>
+
+<div id="toasts"></div>
+<script src="/dashboard/assets/app.js"></script>
+</body>
+</html>

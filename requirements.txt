@@ -1,0 +1,15 @@
+aiogram>=3.13,<4
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30
+sqlalchemy[asyncio]>=2.0,<3
+asyncpg>=0.29
+alembic>=1.13
+pydantic>=2.7,<3
+pydantic-settings>=2.3,<3
+httpx>=0.27
+apscheduler>=3.10,<4
+python-json-logger>=2.0
+aiohttp>=3.9
+
+# Optional: SQLite driver used by the test suite
+aiosqlite>=0.20
